@@ -1,0 +1,9 @@
+{
+  "name": "Digital Krishi Officer",
+  "description": "AI-powered agricultural assistance system for farmers. Features text/voice/image diagnosis, real-time mandi prices, weather updates, and government scheme recommendations.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone",
+    "geolocation"
+  ]
+}
