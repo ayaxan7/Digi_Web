@@ -10,7 +10,8 @@ import Profile from './pages/Profile';
 import HistoryPage from './pages/HistoryPage';
 import Layout from './components/Layout';
 import { User } from './types';
-import { supabase } from './lib/supabase';
+import { auth, firestoreHelpers } from './lib/firebase';
+import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { LanguageProvider } from './LanguageContext';
 import { AuthContext } from './AuthContext';
 
@@ -29,51 +30,45 @@ const AppContent: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const parseUser = (sessionUser: any): User => {
+  const parseUser = async (firebaseUser: any): Promise<User> => {
+    // Get additional user data from Firestore
+    const userData = await firestoreHelpers.getUser(firebaseUser.uid);
+
     return {
-      id: sessionUser.id,
-      name: sessionUser.user_metadata.name || sessionUser.email?.split('@')[0] || 'Farmer',
+      id: firebaseUser.uid,
+      name: userData?.name || firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'Farmer',
       role: 'Farmer',
-      location: sessionUser.user_metadata.location || '',
-      landSize: sessionUser.user_metadata.land_area,
-      crops: sessionUser.user_metadata.crops
+      location: userData?.location || '',
+      landSize: userData?.landSize,
+      crops: userData?.crops
     };
   };
 
   useEffect(() => {
-    // Check active session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        setUser(parseUser(session.user));
-      }
-      setLoading(false);
-    });
-
-    // Listen for auth changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session) {
-        setUser(parseUser(session.user));
+    // Listen for auth state changes
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        const userData = await parseUser(firebaseUser);
+        setUser(userData);
       } else {
         setUser(null);
       }
       setLoading(false);
     });
 
-    return () => subscription.unsubscribe();
+    return () => unsubscribe();
   }, []);
 
   const logout = async () => {
-    await supabase.auth.signOut();
+    await signOut(auth);
     setUser(null);
   };
 
   if (loading) {
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
-        </div>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
+      </div>
     );
   }
 
@@ -82,7 +77,7 @@ const AppContent: React.FC = () => {
       <HashRouter>
         <Routes>
           <Route path="/login" element={<Login />} />
-          
+
           <Route path="/" element={
             <ProtectedRoute>
               <Layout user={user} logout={logout} />
