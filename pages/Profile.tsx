@@ -211,7 +211,7 @@ const Profile: React.FC = () => {
                         <div>
                             <h3 className="text-sm font-semibold text-blue-900">Email Address</h3>
                             <p className="text-sm text-blue-700 mt-1">
-                                Your account is linked to email: <strong>{user?.id ? '*****' + user.id.slice(-4) : 'User'}</strong> (Managed via Supabase Auth)
+                                Your account is linked to email: <strong>{user?.email || 'User'}</strong> (Managed via Firebase Auth)
                             </p>
                         </div>
                     </div>

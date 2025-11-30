@@ -37,6 +37,7 @@ const AppContent: React.FC = () => {
     return {
       id: firebaseUser.uid,
       name: userData?.name || firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'Farmer',
+      email: firebaseUser.email || '',
       role: 'Farmer',
       location: userData?.location || '',
       landSize: userData?.landSize,
